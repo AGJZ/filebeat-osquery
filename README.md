@@ -4,7 +4,8 @@
 
 ------------
 
-#### PLAYBOOK
+### PLAYBOOK
+#### filebeat-osquery.yml
 **Instalación:**
 - Filebeat
 - Osquery

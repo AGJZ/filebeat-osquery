@@ -1,0 +1,49 @@
+- name: Instalacion y Configuracion Filebeat mas Osquery
+  hosts: clienteselka
+  remote_user: usuario
+  become: yes
+  tasks:
+  - name: Filebeat -  Add clave Elastic
+    apt_key: url="https://artifacts.elastic.co/GPG-KEY-elasticsearch"
+
+  - name: Filebeat - Add repositorio Elastic
+    apt_repository: repo="deb https://artifacts.elastic.co/packages/7.x/apt stable main" filename="elastic-7.x" update_cache=yes
+
+  - name: Filebeat - Instalacion Filebeat
+    apt: pkg=filebeat
+
+  - name: Filebeat - Copia o reemplaza el archivo conf Filebeat con los permisos adecuados
+    copy:
+      src: /home/usuari/playbooks/filebeat/conf/filebeat.yml
+      dest: /etc/filebeat/filebeat.yml
+      owner: root
+      group: root
+      mode: 0600
+
+  - name: Filebeat - Activar modulo osquery de Filebeat con la configuracion y permisos adecuados
+    copy:
+      src: /home/usuari/playbooks/filebeat/modules/osquery.yml
+      dest: /etc/filebeat/modules.d/osquery.yml
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Filebeat - Reiniciar servicio
+    service: name=filebeat state=restarted
+
+  - name: Host - Deshabilitar ipv6 
+    sysctl: name={{ item }} value=1 state=present reload=yes
+    with_items:
+      - net.ipv6.conf.all.disable_ipv6
+      - net.ipv6.conf.default.disable_ipv6
+      - net.ipv6.conf.lo.disable_ipv6
+
+  - name: Osquery - Instalacion
+    apt:
+      deb: https://pkg.osquery.io/deb/osquery_4.8.0-1.linux_amd64.deb
+      update_cache: yes
+
+  - name: Osquery - Copia o reemplaza el archivo conf Osquery con los permisos adecuados
+    copy:
+      src: /home/usuari/playbooks/osquery/conf/osquery.yml
+      dest: /etc/osquery/osquery.yml
